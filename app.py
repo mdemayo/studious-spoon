@@ -11,19 +11,23 @@ from sklearn.cluster import KMeans
 from sklearn.metrics.pairwise import cosine_similarity
 import matplotlib.pyplot as plt
 
-# 🔁 Mostrar representantes por cluster
-def mostrar_representantes(X_pca, labels_kmeans, centroids, filepaths, titles, posters_folder='posters', top_n=3):
+# Mostrar representantes por cluster
+def mostrar_representantes_random(X_pca, labels_kmeans, filepaths, titles, posters_folder='posters', top_n=3):
     st.subheader("También podrían interesarte...")
+
     unique_clusters = np.unique(labels_kmeans)
     for cluster_id in unique_clusters:
-        st.markdown(f"### Grupo de pelis {cluster_id}:")
+        st.markdown(f"Pelis categoría {cluster_id}:")
+
         cluster_indices = np.where(labels_kmeans == cluster_id)[0]
-        cluster_points = X_pca[cluster_indices]
-        centroide = centroids[cluster_id]
-        distancias = np.linalg.norm(cluster_points - centroide, axis=1)
-        indices_ordenados = cluster_indices[np.argsort(distancias)[:top_n]]
-        cols = st.columns(top_n)
-        for i, idx in enumerate(indices_ordenados):
+        # Elegir aleatoriamente top_n imágenes del cluster
+        if len(cluster_indices) < top_n:
+            seleccionados = cluster_indices
+        else:
+            seleccionados = np.random.choice(cluster_indices, size=top_n, replace=False)
+
+        cols = st.columns(len(seleccionados))
+        for i, idx in enumerate(seleccionados):
             with cols[i]:
                 ruta = os.path.join(posters_folder, filepaths[idx])
                 st.image(ruta, caption=titles[idx], use_container_width=True)
@@ -97,7 +101,7 @@ if 'input_img' in locals():
         kmeans = KMeans(n_clusters=3, random_state=42).fit(X_pca)
         labels_kmeans = kmeans.labels_
         centroids = kmeans.cluster_centers_
-        mostrar_representantes(X_pca, labels_kmeans, centroids, filepaths, titles)
+        mostrar_representantes_random(X_pca, labels_kmeans, filepaths, titles)
 
 #para ejecutar: streamlit run app.py
 
